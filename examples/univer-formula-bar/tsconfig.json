@@ -1,0 +1,17 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./",
+        "outDir": "lib",
+        "module": "commonjs",
+        "downlevelIteration": true,
+        "baseUrl": "./",
+        "esModuleInterop": true, // auto allowSyntheticDefaultImports true
+        "emitDecoratorMetadata": true,
+        "strictPropertyInitialization": false,
+    },
+    "include": [
+        "src/**/*",
+        "test/**/*.test.(ts|tsx|js)"
+    ]
+}
