@@ -176,7 +176,7 @@ const TextEditor: React.FunctionComponent = () => {
 
     return (
         <>
-            <div id="editor" contentEditable ref={editorRef}>
+            <div id="editor" contentEditable ref={editorRef} style={{ padding: '5px' }}>
                 =ABS(A1-A3 ) + 3
             </div>
             <div id="selection" ref={selectionRef} />
