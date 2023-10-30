@@ -153,8 +153,13 @@ const getCompletionList = (tokens: TokenWithRange[], cursorAt: number | undefine
             title: 'ASIN',
             subtitle: '反正弦函数',
         },
+        {
+            title: 'SUM',
+            subtitle: '求和函数',
+        },
     ];
-    const searchValue = 'a';
+    const tokenAtCursor = tokens.find((token) => cursorAt === token.end && token.kind === TokenKind.Function);
+    const searchValue = tokenAtCursor?.value ?? '';
     const items: CompletionItem[] = allFunctions.filter((x) =>
         x.title.toLowerCase().startsWith(searchValue.toLowerCase())
     );
