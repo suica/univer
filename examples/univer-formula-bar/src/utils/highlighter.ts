@@ -163,6 +163,53 @@ const getCompletionList = (tokens: TokenWithRange[], cursorAt: number | undefine
     return items;
 };
 
+function isPar(token: TokenWithRange) {
+    return [TokenKind.LPar, TokenKind.RPar].includes(token.kind);
+}
+
+const MatchedPairBackgroundColor = '#ddd';
+const UnmatchedPairBackgroundColor = '#ff8080';
+
+const parenthesesMatching = (colorizedTokens: ColorizedToken[], cursorAt: number) => {
+    const indexOfToken = colorizedTokens.findIndex((token) => cursorAt === token.end && isPar(token));
+
+    if (indexOfToken >= 0) {
+        const token = colorizedTokens[indexOfToken];
+        token.background = MatchedPairBackgroundColor;
+        let matchedToken = null;
+        let balanceCounter = 0;
+        if (token.kind === TokenKind.RPar) {
+            for (let i = indexOfToken; i >= 0; i--) {
+                if (colorizedTokens[i].kind === TokenKind.LPar) {
+                    balanceCounter--;
+                } else if (colorizedTokens[i].kind === TokenKind.RPar) {
+                    balanceCounter++;
+                }
+                if (balanceCounter === 0) {
+                    matchedToken = colorizedTokens[i];
+                    break;
+                }
+            }
+        } else if (token.kind === TokenKind.LPar) {
+            for (let i = indexOfToken; i < colorizedTokens.length; i++) {
+                if (colorizedTokens[i].kind === TokenKind.LPar) {
+                    balanceCounter--;
+                } else if (colorizedTokens[i].kind === TokenKind.RPar) {
+                    balanceCounter++;
+                }
+                if (balanceCounter === 0) {
+                    matchedToken = colorizedTokens[i];
+                    break;
+                }
+            }
+        }
+        token.background = UnmatchedPairBackgroundColor;
+        if (matchedToken) {
+            token.background = matchedToken.background = MatchedPairBackgroundColor;
+        }
+    }
+    return colorizedTokens;
+};
 export interface CompletionItem {
     title: string;
     subtitle: string;
@@ -177,6 +224,7 @@ export const highlightFormula = async (text: string, cursorAt: number) =>
         .then(tokenize)
         .then(markTokensWithRange)
         .then(colorizeToken)
+        .then((x) => parenthesesMatching(x, cursorAt))
         .then((tokens) => {
             const output = tokenToString(tokens);
             const completionList = getCompletionList(tokens, cursorAt);
