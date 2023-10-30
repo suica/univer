@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { highlightFormula } from './utils/highlighter';
+import { CompletionItem, highlightFormula } from './utils/highlighter';
 
 // adapted from https://codepen.io/brianmearns/pen/YVjZWw
 
@@ -9,7 +9,62 @@ interface TextSegment {
     node: Node;
 }
 
+function CompletionList({ list, cursor }: { list: CompletionItem[]; cursor: number }) {
+    if (list.length === 0) {
+        return <div>HIDDEN</div>;
+    }
+    return (
+        <ul>
+            {list.map((item, index) => {
+                const selected = index === cursor;
+                return (
+                    <li style={{ background: selected ? '#ddd' : undefined }}>
+                        <span style={{ fontSize: '20px' }}>{item.title}</span>
+                        {selected ? (
+                            <span style={{ fontSize: '15px', color: 'grey' }}>{item.subtitle}</span>
+                        ) : undefined}
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
+
+function useCompletionListManager() {
+    const [cursor, setCursor] = useState(0);
+    const [completionList, setCompletionList] = useState<CompletionItem[]>([]);
+    const listRef = useRef(completionList);
+    const moveCursorUp = useCallback(() => {
+        const length = listRef.current.length;
+        if (length) {
+            setCursor((cursor - 1 + length) % length);
+        } else {
+            setCursor(0);
+        }
+    }, [completionList.length, cursor]);
+    const moveCursorDown = useCallback(() => {
+        const length = listRef.current.length;
+        if (length) {
+            setCursor((cursor + 1) % length);
+        } else {
+            setCursor(0);
+        }
+    }, [completionList.length, cursor]);
+    return {
+        cursor,
+        completionList,
+        setCompletionList: (list: CompletionItem[]) => {
+            setCompletionList(list);
+            listRef.current = list;
+        },
+        moveCursorDown,
+        moveCursorUp,
+    };
+}
+
 const TextEditor: React.FunctionComponent = () => {
+    const { completionList, cursor, setCompletionList, moveCursorDown, moveCursorUp } = useCompletionListManager();
+
     const editorRef = useRef<HTMLDivElement>(null);
     const selectionRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +109,10 @@ const TextEditor: React.FunctionComponent = () => {
             currentIndex += text.length;
         });
 
-        editorElement.innerHTML = await highlightFormula(textContent);
+        const { completionList, output } = await highlightFormula(textContent, anchorIndex ?? 0);
+        editorElement.innerHTML = output;
+
+        setCompletionList(completionList);
 
         restoreSelection(anchorIndex, focusIndex);
     };
@@ -91,11 +149,32 @@ const TextEditor: React.FunctionComponent = () => {
         sel!.setBaseAndExtent(anchorNode, anchorIndex, focusNode, focusIndex);
     };
 
+    const updateCompletionList = useCallback(
+        (e: KeyboardEvent) => {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                moveCursorUp();
+            } else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                moveCursorDown();
+            } else if (e.code === 'Tab') {
+                e.preventDefault();
+            }
+        },
+        [moveCursorDown, moveCursorUp]
+    );
+
     useEffect(() => {
         updateEditor();
         const editorElement = editorRef.current as HTMLDivElement;
+        // TODO: remove listener
         editorElement.addEventListener('input', updateEditor);
-    }, []);
+        editorElement.addEventListener('keydown', updateCompletionList);
+        return () => {
+            editorElement.removeEventListener('input', updateEditor);
+            editorElement.removeEventListener('keydown', updateCompletionList);
+        };
+    }, [updateCompletionList]);
 
     return (
         <>
@@ -103,6 +182,9 @@ const TextEditor: React.FunctionComponent = () => {
                 =ABS(A1-A3 ) + 3
             </div>
             <div id="selection" ref={selectionRef} />
+            <br />
+            <div>Completion List</div>
+            <CompletionList list={completionList} cursor={cursor}></CompletionList>
         </>
     );
 };

@@ -1,12 +1,12 @@
 import { tokenize } from 'excel-formula-tokenizer';
 
 enum TokenKind {
-    Function,
-    Range,
-    Number,
-    LPar,
-    RPar,
-    Operator,
+    Function = 'function',
+    Range = 'range',
+    Number = 'number',
+    LPar = 'lpar',
+    RPar = 'rpar',
+    Operator = 'operator',
 }
 
 const TokenKindToColor: Record<TokenKind, string> = {
@@ -35,8 +35,6 @@ interface ColorizedToken extends TokenWithRange {
 function markTokensWithRange(tokens: Token[]): TokenWithRange[] {
     const tokensWithRange: TokenWithRange[] = [];
     let lengthSum = 0;
-    console.log({ tokens });
-
     for (const token of tokens) {
         switch (token.type) {
             case 'function':
@@ -138,9 +136,53 @@ function tokenToString(tokens: ColorizedToken[]): string {
         })
         .join('');
 }
+const getCompletionList = (tokens: TokenWithRange[], cursorAt: number | undefined): CompletionItem[] => {
+    if (cursorAt === undefined) {
+        return [];
+    }
+    const allFunctions: CompletionItem[] = [
+        {
+            title: 'ABS',
+            subtitle: '绝对值函数',
+        },
+        {
+            title: 'SIN',
+            subtitle: '正弦函数',
+        },
+        {
+            title: 'ASIN',
+            subtitle: '反正弦函数',
+        },
+    ];
+    const searchValue = 'a';
+    const items: CompletionItem[] = allFunctions.filter((x) =>
+        x.title.toLowerCase().startsWith(searchValue.toLowerCase())
+    );
+    console.log({ items });
 
-export const highlightFormula = (text: string, cursorAt = 0) =>
+    return items;
+};
+
+export interface CompletionItem {
+    title: string;
+    subtitle: string;
+    value?: string;
+}
+
+export const highlightFormula = async (text: string, cursorAt: number) =>
     // const tokenBefore = () => {};
     // const posToToken = () => {};
-    // FIXME: this tokenizer has no text range information, and does not handle blank correctly
-    Promise.resolve(text).then(tokenize).then(markTokensWithRange).then(colorizeToken).then(tokenToString);
+    // FIXME: this tokenizer has no genuine text range information, hence only works for formulas with no spaces
+    Promise.resolve(text)
+        .then(tokenize)
+        .then(markTokensWithRange)
+        .then(colorizeToken)
+        // .then((x) => {
+        //     console.log({ x });
+        //     return x;
+        // })
+        .then((tokens) => {
+            const output = tokenToString(tokens);
+            const completionList = getCompletionList(tokens, cursorAt);
+            return { output, completionList };
+        });
