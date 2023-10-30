@@ -177,10 +177,6 @@ export const highlightFormula = async (text: string, cursorAt: number) =>
         .then(tokenize)
         .then(markTokensWithRange)
         .then(colorizeToken)
-        // .then((x) => {
-        //     console.log({ x });
-        //     return x;
-        // })
         .then((tokens) => {
             const output = tokenToString(tokens);
             const completionList = getCompletionList(tokens, cursorAt);

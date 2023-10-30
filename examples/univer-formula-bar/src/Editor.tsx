@@ -18,11 +18,9 @@ function CompletionList({ list, cursor }: { list: CompletionItem[]; cursor: numb
             {list.map((item, index) => {
                 const selected = index === cursor;
                 return (
-                    <li style={{ background: selected ? '#ddd' : undefined }}>
+                    <li style={{ background: selected ? '#ddd' : undefined, width: '400px' }}>
                         <span style={{ fontSize: '20px' }}>{item.title}</span>
-                        {selected ? (
-                            <span style={{ fontSize: '15px', color: 'grey' }}>{item.subtitle}</span>
-                        ) : undefined}
+                        {selected ? <div style={{ fontSize: '15px', color: 'grey' }}>{item.subtitle}</div> : undefined}
                     </li>
                 );
             })}
