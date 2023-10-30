@@ -159,12 +159,13 @@ const getCompletionList = (tokens: TokenWithRange[], cursorAt: number | undefine
         },
     ];
     const tokenAtCursor = tokens.find((token) => cursorAt === token.end && token.kind === TokenKind.Function);
+    if (tokenAtCursor === undefined) {
+        return [];
+    }
     const searchValue = tokenAtCursor?.value ?? '';
     const items: CompletionItem[] = allFunctions.filter((x) =>
         x.title.toLowerCase().startsWith(searchValue.toLowerCase())
     );
-    console.log({ items });
-
     return items;
 };
 
