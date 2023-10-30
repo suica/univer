@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@univerjs/base-docs": "workspace:*",
+        "@univerjs/base-formula-engine": "workspace:*",
         "@univerjs/base-render": "workspace:*",
         "@univerjs/base-sheets": "workspace:*",
         "@univerjs/base-ui": "workspace:*",
@@ -30,6 +31,8 @@
         "@univerjs/sheets-plugin-numfmt": "workspace:*",
         "@univerjs/ui-plugin-docs": "workspace:*",
         "@univerjs/ui-plugin-sheets": "workspace:*",
+        "excel-formula-tokenizer": "^3.0.0",
+        "pegjs": "^0.10.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },

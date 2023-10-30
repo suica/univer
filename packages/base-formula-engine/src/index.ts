@@ -1,3 +1,4 @@
+export { LexerTreeMaker } from './Analysis/Lexer';
 export type {
     ArrayFormulaDataType,
     FormulaDataType,
