@@ -11,7 +11,7 @@ interface TextSegment {
 
 function CompletionList({ list, cursor }: { list: CompletionItem[]; cursor: number }) {
     if (list.length === 0) {
-        return <div>HIDDEN</div>;
+        return <div>Empty</div>;
     }
     return (
         <ul>
@@ -28,10 +28,35 @@ function CompletionList({ list, cursor }: { list: CompletionItem[]; cursor: numb
     );
 }
 
+function getCaretPosition() {
+    let x = 0;
+    let y = 0;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        if (range.getClientRects) {
+            const rects = range.getClientRects();
+            if (rects.length > 0) {
+                x = rects[0].left;
+                y = rects[0].top;
+            }
+        }
+        return { x, y };
+    }
+    return undefined;
+}
+
 function useCompletionListManager() {
     const [cursor, setCursor] = useState(0);
     const [completionList, setCompletionList] = useState<CompletionItem[]>([]);
     const listRef = useRef(completionList);
+    const caretPos = getCaretPosition();
+    const [pos, setPos] = useState<{ x: number; y: number } | undefined>(undefined);
+    useEffect(() => {
+        if (caretPos) {
+            setPos(caretPos);
+        }
+    }, [caretPos?.x, caretPos?.y]);
     const moveCursorUp = useCallback(() => {
         const length = listRef.current.length;
         if (length) {
@@ -57,11 +82,12 @@ function useCompletionListManager() {
         },
         moveCursorDown,
         moveCursorUp,
+        pos,
     };
 }
 
 const TextEditor: React.FunctionComponent = () => {
-    const { completionList, cursor, setCompletionList, moveCursorDown, moveCursorUp } = useCompletionListManager();
+    const { completionList, cursor, setCompletionList, moveCursorDown, moveCursorUp, pos } = useCompletionListManager();
 
     const editorRef = useRef<HTMLDivElement>(null);
     const selectionRef = useRef<HTMLDivElement>(null);
@@ -158,6 +184,7 @@ const TextEditor: React.FunctionComponent = () => {
             } else if (e.code === 'Tab') {
                 e.preventDefault();
             }
+            updateEditor();
         },
         [moveCursorDown, moveCursorUp]
     );
@@ -168,9 +195,11 @@ const TextEditor: React.FunctionComponent = () => {
         // TODO: remove listener
         editorElement.addEventListener('input', updateEditor);
         editorElement.addEventListener('keydown', updateCompletionList);
+        editorElement.addEventListener('click', updateEditor);
         return () => {
             editorElement.removeEventListener('input', updateEditor);
             editorElement.removeEventListener('keydown', updateCompletionList);
+            editorElement.removeEventListener('click', updateEditor);
         };
     }, [updateCompletionList]);
 
@@ -181,8 +210,19 @@ const TextEditor: React.FunctionComponent = () => {
             </div>
             <div id="selection" ref={selectionRef} />
             <br />
-            <div>Completion List</div>
-            <CompletionList list={completionList} cursor={cursor}></CompletionList>
+            <div
+                style={{
+                    position: 'fixed',
+                    display: pos ? 'block' : 'none',
+                    left: pos?.x,
+                    top: (pos?.y ?? 0) + 30,
+                    border: '1px solid grey',
+                    padding: '10px',
+                    background: 'white',
+                }}
+            >
+                <CompletionList list={completionList} cursor={cursor}></CompletionList>
+            </div>
         </>
     );
 };
