@@ -11,7 +11,7 @@ interface TextSegment {
 
 function CompletionList({ list, cursor }: { list: CompletionItem[]; cursor: number }) {
     if (list.length === 0) {
-        return <div>Empty</div>;
+        return <></>;
     }
     return (
         <ul>
@@ -90,7 +90,6 @@ const TextEditor: React.FunctionComponent = () => {
     const { completionList, cursor, setCompletionList, moveCursorDown, moveCursorUp, pos } = useCompletionListManager();
 
     const editorRef = useRef<HTMLDivElement>(null);
-    const selectionRef = useRef<HTMLDivElement>(null);
 
     const getTextSegments = (element: Node): TextSegment[] => {
         const textSegments: TextSegment[] = [];
@@ -208,7 +207,6 @@ const TextEditor: React.FunctionComponent = () => {
             <div id="editor" contentEditable ref={editorRef} style={{ padding: '5px' }}>
                 =ABS(A1-A3 ) + 3
             </div>
-            <div id="selection" ref={selectionRef} />
             <br />
             <div
                 style={{
@@ -217,7 +215,6 @@ const TextEditor: React.FunctionComponent = () => {
                     left: pos?.x,
                     top: (pos?.y ?? 0) + 30,
                     border: '1px solid grey',
-                    padding: '10px',
                     background: 'white',
                 }}
             >
